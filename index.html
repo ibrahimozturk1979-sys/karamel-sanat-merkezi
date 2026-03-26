@@ -3,44 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Karamel v9.50 - Admin Core</title>
+    <title>Karamel v9.60 - Control & Alert</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        :root { --pink: #d63384; --dark: #2c3e50; --green: #10b981; --red: #ef4444; --blue: #3b82f6; --orange: #fd7e14; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; margin: 0; padding: 10px; color: #333; }
+        :root { --pink: #d63384; --dark: #2c3e50; --green: #10b981; --red: #ef4444; --orange: #fd7e14; --yellow: #ffc107; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; margin: 0; padding: 10px; }
         
         .admin-only { display: none !important; }
         .is-admin .admin-only { display: block !important; }
 
-        .top-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
-        .top-btn { flex: 1; min-width: 120px; padding: 14px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        /* TABLO İKONLARI */
+        .status-icon { font-size: 14px; margin-right: 3px; }
+        .conflict-alert { color: var(--red); font-weight: bold; animation: blink 1s infinite; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.3;} 100% {opacity: 1;} }
 
-        /* YAN PANELLER */
-        .side-panel { display: none; position: fixed; top: 0; right: 0; width: 340px; height: 100%; background: white; z-index: 30000; box-shadow: -5px 0 25px rgba(0,0,0,0.2); padding: 20px; border-left: 5px solid var(--pink); box-sizing: border-box; overflow-y: auto; }
-        #panelOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 25000; }
-
-        /* KARTLAR VE İKONLAR */
-        #lessonList { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
-        .lesson-item { background: white; padding: 15px; border-radius: 18px; border-left: 10px solid var(--pink); position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .telafi-badge { background: var(--orange); color: white; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; margin-left: 5px; }
+        /* KART TASARIMI */
+        .lesson-item { background: white; padding: 15px; border-radius: 18px; border-left: 10px solid var(--pink); position: relative; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .is-telafi { border-left-color: var(--orange); }
+        .delete-btn { position: absolute; top: 10px; right: 10px; background: #eee; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; color: #666; font-weight: bold; }
         
-        .card-finance { position: absolute; top: 15px; right: 15px; text-align: right; font-size: 11px; font-weight: bold; cursor: pointer; color: var(--red); text-decoration: underline; }
+        /* ÖDEME ETİKETLERİ */
+        .pay-badge { font-size: 10px; padding: 3px 6px; border-radius: 5px; cursor: pointer; font-weight: bold; position: absolute; top: 12px; right: 45px; }
+        .bg-paid { background: #d1fae5; color: #065f46; }
+        .bg-unpaid { background: #fee2e2; color: #991b1b; }
+        .bg-pre { background: #dbeafe; color: #1e40af; }
 
-        /* TABLO MODAL */
-        #tableModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 40000; overflow: auto; }
-        .weekly-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        .weekly-table th { background: var(--dark); color: white; padding: 12px; }
-        .weekly-table td { border: 1px solid #ddd; padding: 8px; vertical-align: top; background: #fff; min-height: 80px; }
-        .mini-lesson { font-size: 11px; padding: 5px; border-bottom: 1px solid #eee; margin-bottom: 3px; }
-
-        /* ALFABETIK LISTE POPUP */
-        #suggestBox { display: none; position: absolute; background: white; border: 1px solid #ddd; z-index: 50000; width: 250px; max-height: 200px; overflow-y: auto; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .suggest-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
-        .suggest-item:hover { background: #f9f9f9; }
-
-        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .btn-pink { background: var(--pink); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .side-panel { display: none; position: fixed; top: 0; right: 0; width: 340px; height: 100%; background: white; z-index: 30000; padding: 20px; border-left: 5px solid var(--pink); box-sizing: border-box; overflow-y: auto; }
+        #panelOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 25000; }
+        
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { background: var(--dark); color: white; padding: 10px; }
+        td { border: 1px solid #ddd; padding: 8px; vertical-align: top; background: white; }
+        .mini-lesson { font-size: 11px; margin-bottom: 5px; padding: 4px; border-radius: 4px; border-left: 3px solid var(--pink); }
     </style>
 </head>
 <body id="bodyTag">
@@ -50,77 +45,63 @@
 <div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:50000; justify-content:center; align-items:center;">
     <div style="background:white; padding:30px; border-radius:20px; text-align:center;">
         <h3>Yönetici Girişi</h3>
-        <input type="password" id="passInput" placeholder="Şifre" style="text-align:center;">
-        <button class="btn-pink" onclick="checkPass()" style="margin-top:15px; width:100%;">GİRİŞ</button>
+        <input type="password" id="passInput" placeholder="Şifre" style="padding:10px; text-align:center; width:100%; border-radius:10px; border:1px solid #ddd;">
+        <button onclick="checkPass()" style="margin-top:15px; width:100%; padding:10px; background:var(--pink); color:white; border:none; border-radius:10px; font-weight:bold;">GİRİŞ</button>
     </div>
 </div>
 
 <div id="pStudents" class="side-panel">
-    <div style="display:flex; justify-content:space-between;"><strong>👥 Öğrenciler</strong><button onclick="closeAllPanels()">✕</button></div>
-    <div class="admin-only" style="margin-top:10px; background:#f9f9f9; padding:10px; border-radius:10px;">
+    <div style="display:flex; justify-content:space-between;"><strong>👥 Öğrenci Yönetimi</strong><button onclick="closeAllPanels()">✕</button></div>
+    <div class="admin-only" style="margin-top:15px; background:#f9f9f9; padding:15px; border-radius:15px;">
         <input type="text" id="dbSName" placeholder="Ad Soyad">
-        <select id="dbSBranch"><option value="">Branş Seçiniz...</option></select>
-        <input type="number" id="dbSPrice" placeholder="Ders Ücreti ₺">
-        <button class="btn-pink" onclick="addDBStudent()" style="margin-top:5px; width:100%;">KAYDET</button>
+        <input type="number" id="dbSPrice" placeholder="Ders Ücreti ₺" style="margin-top:8px; width:100%; padding:8px;">
+        <select id="dbSPayStatus" style="margin-top:8px; width:100%; padding:8px;">
+            <option value="Ödenmedi">Ödenmedi</option>
+            <option value="Ödendi">Ödendi</option>
+            <option value="Ön Ödeme">Ön Ödeme</option>
+        </select>
+        <button onclick="addDBStudent()" style="margin-top:10px; width:100%; background:var(--green); color:white; border:none; padding:10px; border-radius:8px;">EKLE</button>
     </div>
     <hr><div id="studentDBList"></div>
 </div>
 
 <div id="pTeachers" class="side-panel">
-    <div style="display:flex; justify-content:space-between;"><strong>👨‍🏫 Hocalar</strong><button onclick="closeAllPanels()">✕</button></div>
-    <div class="admin-only" style="margin-top:10px;">
+    <div style="display:flex; justify-content:space-between;"><strong>👨‍🏫 Hoca Yönetimi</strong><button onclick="closeAllPanels()">✕</button></div>
+    <div class="admin-only" style="margin-top:15px;">
         <input type="text" id="nTName" placeholder="Hoca Adı">
-        <input type="number" id="nTRate" placeholder="Ders Ücreti ₺">
-        <button class="btn-pink" onclick="addTeacher()" style="margin-top:5px; width:100%;">EKLE</button>
+        <input type="number" id="nTRate" placeholder="Ders Başı Ücret ₺" style="margin-top:8px; width:100%; padding:8px;">
+        <button onclick="addTeacher()" style="margin-top:10px; width:100%; background:var(--blue); color:white; border:none; padding:10px; border-radius:8px;">EKLE</button>
     </div>
     <hr><div id="tList"></div>
 </div>
 
-<div id="pBranches" class="side-panel">
-    <div style="display:flex; justify-content:space-between;"><strong>🎨 Branşlar</strong><button onclick="closeAllPanels()">✕</button></div>
-    <input type="text" id="nBName" placeholder="Yeni Branş Adı">
-    <button class="btn-pink" onclick="addBranch()" style="margin-top:5px; width:100%;">BRANŞI EKLE</button>
-    <hr><div id="bList"></div>
+<div class="top-bar" style="display:flex; gap:10px; margin-bottom:15px;">
+    <button onclick="document.getElementById('tableModal').style.display='block'" style="flex:1; padding:12px; background:var(--dark); color:white; border:none; border-radius:10px; font-weight:bold;">🔍 HAFTALIK PROGRAM</button>
+    <button onclick="oP('pTeachers')" style="padding:12px; background:var(--blue); color:white; border:none; border-radius:10px;">👨‍🏫 HOCALAR</button>
+    <button onclick="oP('pStudents')" style="padding:12px; background:var(--green); color:white; border:none; border-radius:10px;">👥 ÖĞRENCİLER</button>
+    <button onclick="document.getElementById('loginModal').style.display='flex'" id="modBtn" style="padding:12px; background:var(--pink); color:white; border:none; border-radius:10px;">MOD</button>
 </div>
 
-<div class="top-bar">
-    <button onclick="document.getElementById('tableModal').style.display='block'" class="top-btn" style="background:var(--dark); color:white;">🔍 PROGRAMI GÖRÜNTÜLE</button>
-    <button onclick="oP('pTeachers')" class="top-btn" style="background:var(--blue); color:white;">👨‍🏫 HOCALAR</button>
-    <button onclick="oP('pStudents')" class="top-btn" style="background:var(--green); color:white;">👥 ÖĞRENCİLER</button>
-    <button onclick="document.getElementById('loginModal').style.display='flex'" id="modBtn" class="top-btn" style="background:var(--pink); color:white;">MOD</button>
-    <button onclick="logout()" class="top-btn admin-only" style="background:var(--red); color:white;">ÇIKIŞ</button>
-</div>
-
-<div class="admin-only" style="display:flex; gap:8px; margin-bottom:15px;">
-    <button onclick="oP('pBranches')" class="top-btn" style="background:white; border:1px solid #ddd;">🎨 BRANŞ YÖNETİMİ</button>
-</div>
-
-<div class="admin-only" id="adminArea">
-    <div style="background:white; padding:15px; border-radius:15px; border:2px dashed var(--pink); margin-bottom:15px; position:relative;">
-        <strong>➕ Yeni Ders Planla</strong>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-top:10px;">
-            <div>
-                <input type="text" id="sName" placeholder="Öğrenci Seç..." onclick="showStudentSuggest()" readonly>
-                <div id="suggestBox"></div>
-            </div>
-            <select id="lBranch"></select>
-            <select id="tSelect"></select>
-            <select id="lType"><option value="Normal">Normal</option><option value="Telafi">Telafi</option></select>
-            <input type="date" id="lDate">
-            <input type="time" id="lTime">
-            <button class="btn-pink" onclick="addLesson()">KAYDET</button>
-        </div>
+<div id="adminArea" class="admin-only" style="background:white; padding:15px; border-radius:15px; border:2px dashed var(--pink); margin-bottom:15px;">
+    <strong>➕ Yeni Ders Planla</strong>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-top:10px;">
+        <input type="text" id="sName" placeholder="Öğrenci..." onclick="showStudentSuggest()">
+        <select id="lBranch"></select>
+        <select id="tSelect"></select>
+        <input type="date" id="lDate">
+        <input type="time" id="lTime">
+        <button onclick="addLesson()" style="background:var(--pink); color:white; border:none; border-radius:8px; font-weight:bold;">KAYDET</button>
     </div>
 </div>
 
 <div id="lessonList"></div>
 
-<div id="tableModal">
-    <button onclick="document.getElementById('tableModal').style.display='none'" style="position:fixed; top:20px; right:20px; z-index:40001; background:var(--red); color:white; border:none; border-radius:50%; width:45px; height:45px; font-weight:bold; cursor:pointer;">✕</button>
-    <div style="padding:70px 10px;">
-        <table class="weekly-table">
+<div id="tableModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:40000; overflow:auto;">
+    <button onclick="document.getElementById('tableModal').style.display='none'" style="position:fixed; top:20px; right:20px; background:var(--red); color:white; border:none; border-radius:50%; width:40px; height:40px; font-weight:bold;">✕</button>
+    <div style="padding:60px 10px;">
+        <table id="progTable">
             <thead><tr><th>Pzt</th><th>Sal</th><th>Çar</th><th>Per</th><th>Cum</th><th>Cmt</th><th>Paz</th></tr></thead>
-            <tbody id="weeklyBody"><tr><td><div id="day-1"></div></td><td><div id="day-2"></div></td><td><div id="day-3"></div></td><td><div id="day-4"></div></td><td><div id="day-5"></div></td><td><div id="day-6"></div></td><td><div id="day-0"></div></td></tr></tbody>
+            <tbody><tr><td><div id="day-1"></div></td><td><div id="day-2"></div></td><td><div id="day-3"></div></td><td><div id="day-4"></div></td><td><div id="day-5"></div></td><td><div id="day-6"></div></td><td><div id="day-0"></div></td></tr></tbody>
         </table>
     </div>
 </div>
@@ -128,49 +109,28 @@
 <script>
     const firebaseConfig = { apiKey: "AIzaSyCDDZldfmk_wO3EYL1YC_yDLcSrPf3fQ6w", authDomain: "karamel-sanat-merkezi.firebaseapp.com", projectId: "karamel-sanat-merkezi", storageBucket: "karamel-sanat-merkezi.firebasestorage.app", messagingSenderId: "669363030241", appId: "1:669363030241:web:6583fc1b2d1f2eb7f8cfa0" };
     firebase.initializeApp(firebaseConfig); const db = firebase.firestore();
-    let sDB = [], tMap = {};
+    let sDB = [], tMap = {}, lessonsData = [];
 
     function checkPass() { if(document.getElementById('passInput').value === "1234") { document.getElementById('bodyTag').classList.add('is-admin'); document.getElementById('loginModal').style.display='none'; render(); } }
-    function logout() { document.getElementById('bodyTag').classList.remove('is-admin'); render(); }
     function oP(id) { closeAllPanels(); document.getElementById(id).style.display = 'block'; document.getElementById('panelOverlay').style.display = 'block'; }
-    function closeAllPanels() { document.querySelectorAll('.side-panel').forEach(p => p.style.display='none'); document.getElementById('panelOverlay').style.display='none'; document.getElementById('suggestBox').style.display='none'; }
+    function closeAllPanels() { document.querySelectorAll('.side-panel').forEach(p => p.style.display='none'); document.getElementById('panelOverlay').style.display='none'; }
 
-    // ÖĞRENCİ SEÇİM LİSTESİ (ALFABETİK)
-    function showStudentSuggest() {
-        const box = document.getElementById('suggestBox'); box.innerHTML = "";
-        sDB.sort((a,b) => a.name.localeCompare(b.name, 'tr')).forEach(s => {
-            const d = document.createElement('div'); d.className = "suggest-item";
-            d.innerText = s.name;
-            d.onclick = () => { document.getElementById('sName').value = s.name; box.style.display='none'; };
-            box.appendChild(d);
-        });
-        box.style.display = 'block';
-    }
-
-    // ÖDEME GÜNCELLEME (AKTİF)
-    async function togglePay(id, current) {
+    // ÖDEME DÖNGÜSÜ (Görsel 4 - Tıklayınca Değişir)
+    async function cyclePay(id, current) {
         if(!document.getElementById('bodyTag').classList.contains('is-admin')) return;
-        let n = current === 'Ödenmedi' ? 'Ödendi' : 'Ödenmedi';
-        await db.collection("dersler").doc(id).update({ isPaid: n });
+        const states = ['Ödenmedi', 'Ödendi', 'Ön Ödeme'];
+        let next = states[(states.indexOf(current) + 1) % states.length];
+        await db.collection("dersler").doc(id).update({ isPaid: next });
     }
 
     function sync() {
-        db.collection("branslar").onSnapshot(snap => {
-            const b1 = document.getElementById('lBranch'), b2 = document.getElementById('dbSBranch'), list = document.getElementById('bList');
-            b1.innerHTML = ""; b2.innerHTML = '<option value="">Branş Seçiniz...</option>'; list.innerHTML = "";
-            snap.forEach(doc => {
-                b1.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
-                b2.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
-                list.innerHTML += `<div style="padding:8px; border-bottom:1px solid #eee;">${doc.data().name} <button onclick="db.collection('branslar').doc('${doc.id}').delete()" style="float:right; color:red; border:none; background:none; cursor:pointer;">Sil</button></div>`;
-            });
-        });
         db.collection("hocalar").onSnapshot(snap => {
             const s1 = document.getElementById('tSelect'), list = document.getElementById('tList'), isAdmin = document.getElementById('bodyTag').classList.contains('is-admin');
             s1.innerHTML = ""; list.innerHTML = "";
             snap.forEach(doc => {
                 tMap[doc.data().name] = doc.data().rate || 0;
                 s1.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
-                list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${doc.data().name}</b> ${isAdmin ? `<span style="color:green; margin-left:10px;">(${doc.data().rate}₺)</span>` : ''}</div>`;
+                list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${doc.data().name}</b> ${isAdmin ? `(${doc.data().rate}₺) <button onclick="del('hocalar','${doc.id}')" style="float:right; color:red; border:none; background:none;">Sil</button>` : ''}</div>`;
             });
         });
         db.collection("ogrenciler").onSnapshot(snap => {
@@ -178,8 +138,12 @@
             list.innerHTML = "";
             snap.forEach(doc => {
                 sDB.push(doc.data());
-                list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${doc.data().name}</b><br><small>${doc.data().branch || 'Branş Yok'}</small> ${isAdmin ? `<span style="color:var(--pink); font-weight:bold; float:right;">${doc.data().price}₺</span>` : ''}</div>`;
+                list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${doc.data().name}</b> ${isAdmin ? `<br><small>${doc.data().price}₺ - ${doc.data().payStatus}</small> <button onclick="del('ogrenciler','${doc.id}')" style="float:right; color:red; border:none; background:none;">Sil</button>` : ''}</div>`;
             });
+        });
+        db.collection("branslar").onSnapshot(snap => {
+            const b = document.getElementById('lBranch'); b.innerHTML = "";
+            snap.forEach(doc => b.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`);
         });
     }
 
@@ -187,49 +151,56 @@
         const isAdmin = document.getElementById('bodyTag').classList.contains('is-admin');
         db.collection("dersler").orderBy("time").onSnapshot(snap => {
             const listDiv = document.getElementById('lessonList'); listDiv.innerHTML = "";
+            lessonsData = [];
+            snap.forEach(d => lessonsData.push({id: d.id, ...d.data()}));
+            
             const grids = [0,1,2,3,4,5,6].map(i => document.getElementById('day-'+i));
             grids.forEach(g => g.innerHTML = "");
 
-            snap.forEach(doc => {
-                const data = doc.data(); const dt = new Date(data.time);
+            lessonsData.forEach(data => {
+                const dt = new Date(data.time);
                 const isAbs = data.status === 'Gelmedi', isDone = !!data.checkIn, isTelafi = data.type === 'Telafi';
                 
-                // TABLO GÖRÜNÜMÜ (SADECE BRANŞ VE HOCA)
-                const cell = document.getElementById('day-'+dt.getDay());
-                if(cell) cell.innerHTML += `<div class="mini-lesson" style="background:${isDone?'#e8f5e9':'transparent'}"><b>${dt.getHours()}:${dt.getMinutes()}</b> ${data.branch}<br><small>${data.teacher}</small></div>`;
+                // ÇAKIŞMA KONTROLÜ (Aynı saat, aynı hoca)
+                const conflict = lessonsData.find(l => l.id !== data.id && l.time === data.time && l.teacher === data.teacher);
 
+                // TABLO İKONLARI
+                const cell = document.getElementById('day-'+dt.getDay());
+                if(cell) {
+                    let icons = isDone ? '<span class="status-icon" style="color:green;">✅</span>' : (isAbs ? '<span class="status-icon" style="color:red;">❌</span>' : '');
+                    let warn = conflict ? '<span class="conflict-alert" title="Hoca Çakışması!">⚠️</span>' : '';
+                    cell.innerHTML += `<div class="mini-lesson">${icons}${warn}<b>${dt.getHours()}:${dt.getMinutes()}</b> ${data.branch} - ${data.teacher}</div>`;
+                }
+
+                const payClass = data.isPaid === 'Ödendi' ? 'bg-paid' : (data.isPaid === 'Ön Ödeme' ? 'bg-pre' : 'bg-unpaid');
                 listDiv.innerHTML += `
-                <div class="lesson-item">
-                    ${isAdmin ? `<div class="card-finance" onclick="togglePay('${doc.id}','${data.isPaid}')" style="color:${data.isPaid==='Ödendi'?'green':'red'}">${data.price}₺ - ${data.isPaid}</div>` : ''}
-                    <div style="font-size:15px; font-weight:bold;">👤 ${data.student} ${isTelafi?'<span class="telafi-badge">TELAFİ</span>':''}</div>
-                    <div style="font-size:13px; margin:5px 0;">👨‍🏫 ${data.teacher}</div>
-                    <div style="font-size:13px; color:#666;">🎸 ${data.branch}</div>
-                    <div style="margin:10px 0; font-weight:bold; color:var(--dark);">⏰ ${dt.getHours()}:${dt.getMinutes().toString().padStart(2,'0')}</div>
-                    
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        <button onclick="fTime('${doc.id}','checkIn','${data.checkIn||''}')" style="flex:2; background:var(--green); color:white; border:none; border-radius:8px; padding:12px; font-weight:bold;">${data.checkIn?data.checkIn:'GİRİŞ'}</button>
-                        <button onclick="fTime('${doc.id}','checkOut','${data.checkOut||''}')" style="flex:2; background:var(--blue); color:white; border:none; border-radius:8px; font-weight:bold;">${data.checkOut?data.checkOut:'ÇIKIŞ'}</button>
-                        <button onclick="db.collection('dersler').doc('${doc.id}').update({status:'${isAbs?'Bekliyor':'Gelmedi'}', checkIn:'', checkOut:''})" style="flex:1; background:#666; color:white; border:none; border-radius:8px;">${isAbs?'GELDİ':'GELMEDİ'}</button>
+                <div class="lesson-item ${isTelafi?'is-telafi':''}">
+                    ${isAdmin ? `<button class="delete-btn" onclick="del('dersler','${data.id}')">X</button>` : ''}
+                    ${isAdmin ? `<div class="pay-badge ${payClass}" onclick="cyclePay('${data.id}','${data.isPaid}')">${data.price}₺ - ${data.isPaid}</div>` : ''}
+                    <strong>👤 ${data.student}</strong><br><small>👨‍🏫 ${data.teacher} | 🎸 ${data.branch}</small>
+                    <div style="margin:10px 0;"><b>⏰ ${dt.getHours()}:${dt.getMinutes()}</b></div>
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="fTime('${data.id}','checkIn','${data.checkIn||''}')" style="flex:2; background:var(--green); color:white; border:none; border-radius:8px; padding:10px;">${data.checkIn?data.checkIn:'GİRİŞ'}</button>
+                        <button onclick="fTime('${data.id}','checkOut','${data.checkOut||''}')" style="flex:2; background:var(--blue); color:white; border:none; border-radius:8px;">${data.checkOut?data.checkOut:'ÇIKIŞ'}</button>
+                        <button onclick="db.collection('dersler').doc('${data.id}').update({status:'${isAbs?'Bekliyor':'Gelmedi'}', checkIn:'', checkOut:''})" style="flex:1; background:#666; color:white; border:none; border-radius:8px;">${isAbs?'GELDİ':'GELMEDİ'}</button>
                     </div>
                 </div>`;
             });
         });
     }
 
+    async function del(c, id) { if(confirm('Silinecek, emin misiniz?')) await db.collection(c).doc(id).delete(); }
     async function fTime(id, f, v) { let n = v === "" ? new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) : ""; await db.collection("dersler").doc(id).update({ [f]: n, status: 'Geldi' }); }
     async function addDBStudent() {
-        const n = document.getElementById('dbSName').value, b = document.getElementById('dbSBranch').value, p = document.getElementById('dbSPrice').value;
-        if(n && b) await db.collection("ogrenciler").add({ name: n, branch: b, price: parseFloat(p)||0, payStatus: 'Ödenmedi' });
-        document.getElementById('dbSName').value = ""; document.getElementById('dbSPrice').value = "";
+        const n = document.getElementById('dbSName').value, p = document.getElementById('dbSPrice').value, s = document.getElementById('dbSPayStatus').value;
+        if(n) await db.collection("ogrenciler").add({ name: n, price: parseFloat(p)||0, payStatus: s });
     }
     async function addTeacher() { const n = document.getElementById('nTName').value, r = document.getElementById('nTRate').value; if(n) await db.collection("hocalar").add({name:n, rate: parseFloat(r)||0}); }
-    async function addBranch() { const n = document.getElementById('nBName').value; if(n) await db.collection("branslar").add({name:n}); document.getElementById('nBName').value=""; }
     async function addLesson() {
         const s = document.getElementById('sName').value, h = document.getElementById('tSelect').value, d = document.getElementById('lDate').value, t = document.getElementById('lTime').value;
         const stu = sDB.find(x => x.name === s);
         if(!stu) return alert("Öğrenci Seçiniz!");
-        await db.collection("dersler").add({ student:s, teacher:h, time:`${d}T${t}`, branch:document.getElementById('lBranch').value, type:document.getElementById('lType').value, price:stu.price, isPaid:stu.payStatus, status:'Bekliyor', checkIn:'', checkOut:'' });
-        document.getElementById('sName').value = "";
+        await db.collection("dersler").add({ student:s, teacher:h, time:`${d}T${t}`, branch:document.getElementById('lBranch').value, type:'Normal', price:stu.price, isPaid:stu.payStatus, status:'Bekliyor', checkIn:'', checkOut:'' });
     }
 
     sync(); render();
