@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Karamel v10.1 - Advanced Scheduling</title>
+    <title>Karamel v10.2 - Double-Check Conflict</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -13,7 +13,6 @@
         .admin-only { display: none !important; }
         .is-admin .admin-only { display: block !important; }
 
-        /* YAN YANA 3'LÜ PLAN */
         #lessonList { display: grid; grid-template-columns: repeat(auto-fill, minmax(30%, 1fr)); gap: 15px; }
         @media (max-width: 900px) { #lessonList { grid-template-columns: repeat(auto-fill, minmax(45%, 1fr)); } }
         @media (max-width: 600px) { #lessonList { grid-template-columns: 1fr; } }
@@ -21,10 +20,9 @@
         .lesson-item { background: white; padding: 15px; border-radius: 18px; border-left: 10px solid var(--pink); position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .del-btn { background: #fee2e2; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; color: var(--red); font-weight: bold; }
         
-        /* TELAFİ ETİKETİ (PLANDA) */
         .telafi-badge { background: var(--orange); color: black; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 5px; }
+        .conflict-warning { color: var(--red); font-weight: bold; font-size: 12px; margin-top: 5px; display: block; }
 
-        /* TABLO & POPUP */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 45000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; position: relative; }
         
@@ -69,7 +67,7 @@
     <div class="admin-only" style="margin-top:15px; background:#fff0f6; padding:15px; border-radius:15px;">
         <input type="text" id="dbSName" placeholder="Ad Soyad"><select id="dbSBranchSelect"></select><input type="number" id="dbSPrice" placeholder="Ders Ücreti ₺">
         <select id="dbSPayStatus"><option value="Ödenmedi">Ödenmedi</option><option value="Ödendi">Ödendi</option><option value="Ön Ödeme">Ön Ödeme</option></select>
-        <button class="btn-main" onclick="addDBStudent()" style="background:var(--green);">KAYDET</button>
+        <button class="btn-main" onclick="addDBStudent()">KAYDET</button>
     </div><hr><div id="studentDBList"></div>
 </div>
 
@@ -126,14 +124,25 @@
             const listDiv = document.getElementById('lessonList'); listDiv.innerHTML = ""; lessonsData = [];
             snap.forEach(d => lessonsData.push({id: d.id, ...d.data()}));
             [0,1,2,3,4,5,6].forEach(i => document.getElementById('day-'+i).innerHTML = "");
+            
             lessonsData.forEach(data => {
                 const dt = new Date(data.time), isAbs = data.status === 'Gelmedi', isDone = !!data.checkIn, isTelafi = data.type === 'Telafi';
-                const conflict = lessonsData.find(l => l.id !== data.id && l.time === data.time && l.teacher === data.teacher);
+                
+                // ÇAKIŞMA KONTROLÜ (HOCA VE ÖĞRENCİ)
+                const teacherConflict = lessonsData.find(l => l.id !== data.id && l.time === data.time && l.teacher === data.teacher);
+                const studentConflict = lessonsData.find(l => l.id !== data.id && l.time === data.time && l.student === data.student);
+                const hasConflict = teacherConflict || studentConflict;
+
                 const cell = document.getElementById('day-'+dt.getDay());
-                if(cell) { cell.innerHTML += `<div class="tablo-ders">${isDone?'✅':(isAbs?'❌':'')}${conflict?'⚠️':''} <b>${data.student}</b> ${isTelafi?'<span class="tablo-telafi">(T)</span>':''}<br>⏰ ${dt.getHours()}:${dt.getMinutes().toString().padStart(2,'0')} | 👨‍🏫 ${data.teacher}<br>🎸 ${data.branch}</div>`; }
+                if(cell) { 
+                    cell.innerHTML += `<div class="tablo-ders">${isDone?'✅':(isAbs?'❌':'')}${hasConflict?'⚠️':''} <b>${data.student}</b> ${isTelafi?'<span class="tablo-telafi">(T)</span>':''}<br>⏰ ${dt.getHours()}:${dt.getMinutes().toString().padStart(2,'0')} | 👨‍🏫 ${data.teacher}</div>`; 
+                }
+
                 const payStyle = data.isPaid === 'Ödendi' ? 'background:#d1fae5; color:#065f46;' : (data.isPaid === 'Ön Ödeme' ? 'background:#dbeafe; color:#1e40af;' : 'background:#fee2e2; color:#991b1b;');
+                
                 listDiv.innerHTML += `<div class="lesson-item">
                     ${isTelafi ? '<div class="telafi-badge">TELAFİ</div>' : ''}
+                    ${hasConflict ? `<span class="conflict-warning">⚠️ ÇAKIŞMA: ${teacherConflict?'Hoca Meşgul':''} ${teacherConflict && studentConflict?'& ':''} ${studentConflict?'Öğrenci Derste':''}</span>` : ''}
                     ${adm ? `<button class="del-btn" onclick="del('dersler','${data.id}')" style="position:absolute; top:10px; right:10px;">X</button><div onclick="cyclePay('${data.id}','${data.isPaid}')" style="position:absolute; top:12px; right:45px; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:bold; cursor:pointer; ${payStyle}">${data.price}₺ - ${data.isPaid}</div>` : ''}
                     <b>👤 ${data.student}</b><br><small>👨‍🏫 ${data.teacher} | 🎸 ${data.branch}</small><br><b>⏰ ${dt.getHours()}:${dt.getMinutes().toString().padStart(2,'0')}</b>
                     <div style="display:flex; gap:5px; margin-top:10px;">
