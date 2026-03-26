@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Karamel v9.70 - Master Fix</title>
+    <title>Karamel v9.80 - Final Admin</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -13,29 +13,39 @@
         .admin-only { display: none !important; }
         .is-admin .admin-only { display: block !important; }
 
+        /* YAN YANA 3'LÜ PLAN DÜZENİ */
+        #lessonList { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(30%, 1fr)); 
+            gap: 15px; 
+        }
+        @media (max-width: 900px) { #lessonList { grid-template-columns: repeat(auto-fill, minmax(45%, 1fr)); } }
+        @media (max-width: 600px) { #lessonList { grid-template-columns: 1fr; } }
+
         /* KART TASARIMI */
-        .lesson-item { background: white; padding: 15px; border-radius: 18px; border-left: 10px solid var(--pink); position: relative; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .is-telafi { border-left-color: var(--orange); background: #fffcf5; }
-        .lesson-del { position: absolute; top: 10px; right: 10px; background: #fee2e2; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: var(--red); font-weight: bold; }
+        .lesson-item { background: white; padding: 15px; border-radius: 18px; border-left: 10px solid var(--pink); position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .is-telafi { border-left-color: var(--orange); }
+        .del-btn { background: #fee2e2; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; color: var(--red); font-weight: bold; font-size: 12px; }
+        .card-del { position: absolute; top: 10px; right: 10px; }
         
-        /* ÖDEME ROLLERİ */
-        .pay-pill { position: absolute; top: 12px; right: 45px; font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        /* ÖDEME ETİKETİ */
+        .pay-pill { position: absolute; top: 12px; right: 42px; font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .p-unpaid { background: #fee2e2; color: #991b1b; }
         .p-paid { background: #d1fae5; color: #065f46; }
         .p-pre { background: #dbeafe; color: #1e40af; }
 
-        /* TABLO & MODAL */
-        #tableModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 40000; overflow: auto; }
-        .weekly-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        .weekly-table td { border: 1px solid #ddd; padding: 8px; vertical-align: top; background: white; min-height: 90px; }
-        .mini-l { font-size: 11px; margin-bottom: 4px; padding: 5px; border-radius: 5px; background: #f8f9fa; border-left: 3px solid var(--pink); }
-
-        /* YAN PANELLER */
-        .side-panel { display: none; position: fixed; top: 0; right: 0; width: 340px; height: 100%; background: white; z-index: 30000; padding: 20px; box-shadow: -5px 0 20px rgba(0,0,0,0.2); border-left: 5px solid var(--pink); overflow-y: auto; }
+        /* YAN PANELLER & LİSTELER */
+        .side-panel { display: none; position: fixed; top: 0; right: 0; width: 360px; height: 100%; background: white; z-index: 30000; padding: 20px; box-shadow: -5px 0 20px rgba(0,0,0,0.2); border-left: 5px solid var(--pink); overflow-y: auto; box-sizing: border-box; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 25000; }
-        
+        .list-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+
         input, select { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         .btn-main { background: var(--pink); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+
+        /* TABLO */
+        #tableModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 40000; overflow: auto; }
+        .weekly-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        .weekly-table td { border: 1px solid #ddd; padding: 8px; vertical-align: top; background: white; min-height: 80px; font-size: 12px; }
     </style>
 </head>
 <body id="bodyTag">
@@ -44,52 +54,47 @@
 
 <div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:50000; justify-content:center; align-items:center;">
     <div style="background:white; padding:35px; border-radius:25px; text-align:center; width:300px;">
-        <h3 style="margin-top:0;">Yönetici Girişi</h3>
-        <input type="password" id="passInput" placeholder="Şifre" style="text-align:center; font-size:18px;">
+        <h3>Yönetici Girişi</h3>
+        <input type="password" id="passInput" placeholder="Şifre" style="text-align:center;">
         <button class="btn-main" onclick="checkPass()">SİSTEMİ AÇ</button>
     </div>
 </div>
 
 <div id="pStudents" class="side-panel">
-    <div style="display:flex; justify-content:space-between;"><strong>👥 Öğrenciler</strong><button onclick="closePanels()">✕</button></div>
+    <div style="display:flex; justify-content:space-between;"><strong>👥 Öğrenci Listesi</strong><button onclick="closePanels()">✕</button></div>
     <div class="admin-only" style="margin-top:15px; background:#f9f9f9; padding:15px; border-radius:15px;">
         <input type="text" id="dbSName" placeholder="Ad Soyad">
+        <select id="dbSBranchSelect"><option value="">Branş Seç...</option></select>
         <input type="number" id="dbSPrice" placeholder="Ders Ücreti ₺">
-        <select id="dbSPayStatus">
-            <option value="Ödenmedi">Ödenmedi</option>
-            <option value="Ödendi">Ödendi</option>
-            <option value="Ön Ödeme">Ön Ödeme</option>
-        </select>
-        <button class="btn-main" onclick="addDBStudent()" style="background:var(--green);">ÖĞRENCİ EKLE</button>
+        <button class="btn-main" onclick="addDBStudent()" style="background:var(--green);">YENİ ÖĞRENCİ EKLE</button>
     </div>
     <hr><div id="studentDBList"></div>
 </div>
 
 <div id="pTeachers" class="side-panel">
-    <div style="display:flex; justify-content:space-between;"><strong>👨‍🏫 Hocalar</strong><button onclick="closePanels()">✕</button></div>
+    <div style="display:flex; justify-content:space-between;"><strong>👨‍🏫 Hoca Listesi</strong><button onclick="closePanels()">✕</button></div>
     <div class="admin-only" style="margin-top:15px;">
-        <input type="text" id="nTName" placeholder="Hoca Adı">
-        <input type="number" id="nTRate" placeholder="Ders Başı Ücret ₺">
-        <button class="btn-main" onclick="addTeacher()" style="background:var(--blue);">HOCA EKLE</button>
+        <input type="text" id="nTName" placeholder="Hoca Adı Soyadı">
+        <input type="number" id="nTRate" placeholder="Ders Ücreti ₺">
+        <button class="btn-main" onclick="addTeacher()" style="background:var(--blue);">YENİ HOCA EKLE</button>
     </div>
     <hr><div id="tList"></div>
 </div>
 
 <div style="display:flex; gap:10px; margin-bottom:15px;">
-    <button onclick="document.getElementById('tableModal').style.display='block'" style="flex:2; padding:15px; background:var(--dark); color:white; border:none; border-radius:12px; font-weight:bold;">🔍 PROGRAMI GÖRÜNTÜLE</button>
+    <button onclick="document.getElementById('tableModal').style.display='block'" style="flex:2; padding:15px; background:var(--dark); color:white; border:none; border-radius:12px; font-weight:bold;">🔍 PROGRAM</button>
     <button onclick="oP('pTeachers')" style="flex:1; padding:15px; background:var(--blue); color:white; border:none; border-radius:12px;">👨‍🏫 HOCALAR</button>
     <button onclick="oP('pStudents')" style="flex:1; padding:15px; background:var(--green); color:white; border:none; border-radius:12px;">👥 ÖĞRENCİLER</button>
     <button onclick="document.getElementById('loginModal').style.display='flex'" id="modBtn" style="flex:1; padding:15px; background:var(--pink); color:white; border:none; border-radius:12px;">MOD</button>
     <button onclick="logout()" class="admin-only" style="flex:1; padding:15px; background:var(--red); color:white; border:none; border-radius:12px;">ÇIKIŞ</button>
 </div>
 
-<div id="adminArea" class="admin-only" style="background:white; padding:20px; border-radius:20px; border:2px dashed var(--pink); margin-bottom:20px;">
+<div id="adminArea" class="admin-only" style="background:white; padding:15px; border-radius:20px; border:2px dashed var(--pink); margin-bottom:20px;">
     <strong>➕ Yeni Ders Planla</strong>
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-top:10px;">
-        <select id="sSelect"><option value="">Öğrenci Seç...</option></select>
-        <select id="lBranch"></select>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-top:10px;">
+        <select id="sSelect"><option value="">Öğrenci...</option></select>
+        <select id="lBranchSelect"></select>
         <select id="tSelect"></select>
-        <select id="lType"><option value="Normal">Normal</option><option value="Telafi">Telafi</option></select>
         <input type="date" id="lDate">
         <input type="time" id="lTime">
         <button class="btn-main" onclick="addLesson()" style="margin:0;">KAYDET</button>
@@ -99,8 +104,8 @@
 <div id="lessonList"></div>
 
 <div id="tableModal">
-    <button onclick="document.getElementById('tableModal').style.display='none'" style="position:fixed; top:20px; right:20px; background:var(--red); color:white; border:none; border-radius:50%; width:45px; height:45px; font-weight:bold; cursor:pointer; z-index:40001;">✕</button>
-    <div style="padding:80px 15px;">
+    <button onclick="document.getElementById('tableModal').style.display='none'" style="position:fixed; top:20px; right:20px; background:var(--red); color:white; border:none; border-radius:50%; width:40px; height:40px; z-index:40001;">✕</button>
+    <div style="padding:70px 10px;">
         <table class="weekly-table">
             <thead><tr><th>Pzt</th><th>Sal</th><th>Çar</th><th>Per</th><th>Cum</th><th>Cmt</th><th>Paz</th></tr></thead>
             <tbody><tr><td><div id="day-1"></div></td><td><div id="day-2"></div></td><td><div id="day-3"></div></td><td><div id="day-4"></div></td><td><div id="day-5"></div></td><td><div id="day-6"></div></td><td><div id="day-0"></div></td></tr></tbody>
@@ -126,13 +131,13 @@
     }
 
     function sync() {
-        db.collection("hocalar").onSnapshot(snap => {
+        db.collection("hocalar").orderBy("name").onSnapshot(snap => {
             const s1 = document.getElementById('tSelect'), list = document.getElementById('tList'), adm = document.getElementById('bodyTag').classList.contains('is-admin');
             s1.innerHTML = ""; list.innerHTML = "";
             snap.forEach(doc => {
                 tMap[doc.data().name] = doc.data().rate || 0;
                 s1.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
-                list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${doc.data().name}</b> ${adm ? `(${doc.data().rate}₺) <button onclick="del('hocalar','${doc.id}')" style="float:right; color:red; border:none; background:none; cursor:pointer;">Sil</button>` : ''}</div>`;
+                list.innerHTML += `<div class="list-row"><span><b>${doc.data().name}</b> ${adm?`<span style="color:var(--blue); margin-left:10px;">${doc.data().rate}₺</span>`:''}</span> ${adm?`<button class="del-btn" onclick="del('hocalar','${doc.id}')">X</button>`:''}</div>`;
             });
         });
         db.collection("ogrenciler").orderBy("name").onSnapshot(snap => {
@@ -141,12 +146,16 @@
             snap.forEach(doc => {
                 const d = doc.data(); sDB.push(d);
                 sel.innerHTML += `<option value="${d.name}">${d.name}</option>`;
-                list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${d.name}</b> ${adm ? `<br><small>${d.price}₺ - ${d.payStatus}</small> <button onclick="del('ogrenciler','${doc.id}')" style="float:right; color:red; border:none; background:none; cursor:pointer;">Sil</button>` : ''}</div>`;
+                list.innerHTML += `<div class="list-row"><div><b>${d.name}</b>${adm?`<br><small>${d.branch} | ${d.price}₺</small>`:''}</div> ${adm?`<button class="del-btn" onclick="del('ogrenciler','${doc.id}')">X</button>`:''}</div>`;
             });
         });
-        db.collection("branslar").onSnapshot(snap => {
-            const b = document.getElementById('lBranch'); b.innerHTML = "";
-            snap.forEach(doc => b.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`);
+        db.collection("branslar").orderBy("name").onSnapshot(snap => {
+            const b1 = document.getElementById('dbSBranchSelect'), b2 = document.getElementById('lBranchSelect');
+            b1.innerHTML = '<option value="">Branş Seç...</option>'; b2.innerHTML = "";
+            snap.forEach(doc => {
+                b1.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
+                b2.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
+            });
         });
     }
 
@@ -155,32 +164,30 @@
         db.collection("dersler").orderBy("time").onSnapshot(snap => {
             const listDiv = document.getElementById('lessonList'); listDiv.innerHTML = "";
             lessonsData = []; snap.forEach(d => lessonsData.push({id: d.id, ...d.data()}));
-            
             [0,1,2,3,4,5,6].forEach(i => document.getElementById('day-'+i).innerHTML = "");
 
             lessonsData.forEach(data => {
                 const dt = new Date(data.time), isAbs = data.status === 'Gelmedi', isDone = !!data.checkIn, isTelafi = data.type === 'Telafi';
                 const conflict = lessonsData.find(l => l.id !== data.id && l.time === data.time && l.teacher === data.teacher);
 
-                // TABLO İKONLARI
                 const cell = document.getElementById('day-'+dt.getDay());
                 if(cell) {
-                    let stIcon = isDone ? '✅' : (isAbs ? '❌' : '');
-                    let cfIcon = conflict ? '⚠️' : '';
-                    cell.innerHTML += `<div class="mini-l">${stIcon}${cfIcon} <b>${dt.getHours()}:${dt.getMinutes()}</b> ${data.branch} - ${data.teacher}</div>`;
+                    let icon = isDone ? '✅' : (isAbs ? '❌' : '');
+                    let warn = conflict ? '⚠️' : '';
+                    cell.innerHTML += `<div style="padding:4px; border-bottom:1px solid #eee; font-size:11px;">${icon}${warn} ${dt.getHours()}:${dt.getMinutes()} ${data.branch} - ${data.teacher}</div>`;
                 }
 
                 const payStyle = data.isPaid === 'Ödendi' ? 'p-paid' : (data.isPaid === 'Ön Ödeme' ? 'p-pre' : 'p-unpaid');
                 listDiv.innerHTML += `
                 <div class="lesson-item ${isTelafi?'is-telafi':''}">
-                    ${adm ? `<button class="lesson-del" onclick="del('dersler','${data.id}')">X</button>` : ''}
+                    ${adm ? `<button class="del-btn card-del" onclick="del('dersler','${data.id}')">X</button>` : ''}
                     ${adm ? `<div class="pay-pill ${payStyle}" onclick="cyclePay('${data.id}','${data.isPaid}')">${data.price}₺ - ${data.isPaid}</div>` : ''}
-                    <div style="font-size:16px;"><b>👤 ${data.student}</b></div>
-                    <div style="font-size:14px; color:#555;">👨‍🏫 ${data.teacher} | 🎸 ${data.branch}</div>
-                    <div style="margin:10px 0; font-weight:bold;">⏰ ${dt.getHours()}:${dt.getMinutes().toString().padStart(2,'0')}</div>
-                    <div style="display:flex; gap:6px;">
-                        <button onclick="fastTime('${data.id}','checkIn','${data.checkIn||''}')" style="flex:2; background:var(--green); color:white; border:none; border-radius:10px; padding:12px; font-weight:bold;">${data.checkIn?data.checkIn:'GİRİŞ'}</button>
-                        <button onclick="fastTime('${data.id}','checkOut','${data.checkOut||''}')" style="flex:2; background:var(--blue); color:white; border:none; border-radius:10px; font-weight:bold;">${data.checkOut?data.checkOut:'ÇIKIŞ'}</button>
+                    <div style="font-size:15px;"><b>👤 ${data.student}</b></div>
+                    <div style="font-size:13px; color:#555; margin:3px 0;">👨‍🏫 ${data.teacher} | 🎸 ${data.branch}</div>
+                    <div style="margin:8px 0; font-weight:bold; color:var(--dark);">⏰ ${dt.getHours()}:${dt.getMinutes().toString().padStart(2,'0')}</div>
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="fT('${data.id}','checkIn','${data.checkIn||''}')" style="flex:2; background:var(--green); color:white; border:none; border-radius:10px; padding:10px; font-weight:bold;">${data.checkIn?data.checkIn:'GİRİŞ'}</button>
+                        <button onclick="fT('${data.id}','checkOut','${data.checkOut||''}')" style="flex:2; background:var(--blue); color:white; border:none; border-radius:10px; font-weight:bold;">${data.checkOut?data.checkOut:'ÇIKIŞ'}</button>
                         <button onclick="db.collection('dersler').doc('${data.id}').update({status:'${isAbs?'Bekliyor':'Gelmedi'}', checkIn:'', checkOut:''})" style="flex:1; background:#666; color:white; border:none; border-radius:10px;">${isAbs?'GELDİ':'GELMEDİ'}</button>
                     </div>
                 </div>`;
@@ -189,17 +196,17 @@
     }
 
     async function del(c, id) { if(confirm('Silinecek, emin misiniz?')) await db.collection(c).doc(id).delete(); }
-    async function fastTime(id, f, v) { let n = v === "" ? new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) : ""; await db.collection("dersler").doc(id).update({ [f]: n, status: 'Geldi' }); }
+    async function fT(id, f, v) { let n = v === "" ? new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) : ""; await db.collection("dersler").doc(id).update({ [f]: n, status: 'Geldi' }); }
     async function addDBStudent() {
-        const n = document.getElementById('dbSName').value, p = document.getElementById('dbSPrice').value, s = document.getElementById('dbSPayStatus').value;
-        if(n) await db.collection("ogrenciler").add({ name: n, price: parseFloat(p)||0, payStatus: s });
+        const n = document.getElementById('dbSName').value, b = document.getElementById('dbSBranchSelect').value, p = document.getElementById('dbSPrice').value;
+        if(n && b) await db.collection("ogrenciler").add({ name: n, branch: b, price: parseFloat(p)||0, payStatus: 'Ödenmedi' });
     }
     async function addTeacher() { const n = document.getElementById('nTName').value, r = document.getElementById('nTRate').value; if(n) await db.collection("hocalar").add({name:n, rate: parseFloat(r)||0}); }
     async function addLesson() {
         const s = document.getElementById('sSelect').value, h = document.getElementById('tSelect').value, d = document.getElementById('lDate').value, t = document.getElementById('lTime').value;
         const stu = sDB.find(x => x.name === s);
-        if(!stu || !d || !t) return alert("Eksik Bilgi!");
-        await db.collection("dersler").add({ student:s, teacher:h, time:`${d}T${t}`, branch:document.getElementById('lBranch').value, type:document.getElementById('lType').value, price:stu.price, isPaid:stu.payStatus, status:'Bekliyor', checkIn:'', checkOut:'' });
+        if(!stu || !d || !t) return alert("Hata: Bilgiler Eksik!");
+        await db.collection("dersler").add({ student:s, teacher:h, time:`${d}T${t}`, branch:document.getElementById('lBranchSelect').value, type:'Normal', price:stu.price, isPaid:stu.payStatus, status:'Bekliyor', checkIn:'', checkOut:'' });
     }
 
     sync(); render();
