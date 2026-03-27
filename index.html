@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Karamel v12.2 - Full Indicators</title>
+    <title>Karamel v12.4 - Dropdown Filters & Full Menu</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -12,6 +12,11 @@
         
         .admin-only { display: none !important; }
         .is-admin .admin-only { display: block !important; }
+
+        /* Filtre Alanı */
+        .filter-section { background: white; padding: 15px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+        @media (max-width: 600px) { .filter-grid { grid-template-columns: 1fr; } }
 
         #lessonList { display: grid; grid-template-columns: repeat(auto-fill, minmax(30%, 1fr)); gap: 15px; }
         @media (max-width: 900px) { #lessonList { grid-template-columns: repeat(auto-fill, minmax(45%, 1fr)); } }
@@ -24,7 +29,7 @@
         .table-container { padding: 60px 20px 20px 20px; }
         .day-row { background: white; margin-bottom: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eef0f5; }
         .day-header { background: var(--dark); color: white; padding: 12px 25px; font-size: 18px; font-weight: bold; }
-        .teachers-grid { display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 15px; gap: 15px; background: #fff; }
+        .teachers-grid { display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 15px; gap: 15px; }
         .teacher-column { min-width: 230px; background: #fcfcfd; border-radius: 15px; padding: 10px; border: 1px solid #f0f0f0; }
         .teacher-name-tag { background: var(--pink); color: white; padding: 8px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 13px; margin-bottom: 10px; }
         
@@ -32,10 +37,10 @@
         .telafi-badge { background: var(--orange); color: white; font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 4px; display: inline-block; margin-bottom: 3px; }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 45000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; max-height: 80vh; overflow-y: auto; }
         .side-panel { display: none; position: fixed; top: 0; right: 0; width: 380px; height: 100%; background: white; z-index: 30000; padding: 20px; box-shadow: -5px 0 20px rgba(0,0,0,0.2); border-left: 5px solid var(--pink); overflow-y: auto; box-sizing: border-box; }
         .list-card { background: #f8f9fa; padding: 15px; border-radius: 15px; margin-bottom: 12px; border: 1px solid #eee; position: relative; }
-        input, select { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
         .btn-main { background: var(--pink); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
     </style>
 </head>
@@ -47,9 +52,27 @@
     <button onclick="document.getElementById('tableModal').style.display='block'" style="flex:2; padding:15px; background:var(--dark); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;">🔍 PROGRAM TABLOSU</button>
     <button onclick="oP('pTeachers')" class="admin-only" style="flex:1; padding:15px; background:var(--blue); color:white; border:none; border-radius:12px; font-weight:bold; font-size:11px;">HOCA EKLE/SİL</button>
     <button onclick="oP('pStudents')" class="admin-only" style="flex:1; padding:15px; background:var(--green); color:white; border:none; border-radius:12px; font-weight:bold; font-size:11px;">ÖĞRENCİ EKLE/SİL</button>
-    <button onclick="showHakedis()" class="admin-only" style="flex:1; padding:15px; background:var(--purple); color:white; border:none; border-radius:12px; font-weight:bold;">HAKEDİŞ</button>
-    <button onclick="showDevamsizlik()" class="admin-only" style="flex:1; padding:15px; background:var(--orange); color:white; border:none; border-radius:12px; font-weight:bold;">DEVAMSIZLIK</button>
+    <button onclick="showHakedis()" class="admin-only" style="flex:1; padding:15px; background:var(--purple); color:white; border:none; border-radius:12px; font-weight:bold; font-size:11px;">HAKEDİŞ</button>
+    <button onclick="showDevamsizlik()" class="admin-only" style="flex:1; padding:15px; background:var(--orange); color:white; border:none; border-radius:12px; font-weight:bold; font-size:11px;">DEVAMSIZLIK</button>
     <button onclick="toggleMod()" id="modBtn" style="padding:15px; background:var(--pink); color:white; border:none; border-radius:12px; font-weight:bold;">MOD</button>
+</div>
+
+<div class="filter-section">
+    <div class="filter-grid">
+        <div>
+            <label style="font-size: 12px; font-weight: bold; color: var(--dark);">👨‍🏫 Hoca Bul:</label>
+            <select id="filterTeacher" onchange="renderLessons()">
+                <option value="Tümü">Tümü</option>
+            </select>
+        </div>
+        <div>
+            <label style="font-size: 12px; font-weight: bold; color: var(--dark);">👤 Öğrenci Seç:</label>
+            <select id="filterStudent" onchange="renderLessons()">
+                <option value="Tümü">Tümü</option>
+            </select>
+        </div>
+        <button onclick="resetFilters()" style="padding: 12px 20px; background: #eee; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; height: 45px;">TEMİZLE</button>
+    </div>
 </div>
 
 <div id="editModal" class="modal-overlay">
@@ -71,7 +94,7 @@
 <div id="adminArea" class="admin-only" style="background:white; padding:15px; border-radius:20px; border:2px dashed var(--pink); margin-bottom:20px;">
     <strong>➕ Yeni Ders Planla</strong>
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-top:10px;">
-        <select id="sSelect"><option value="">Öğrenci...</option></select>
+        <select id="sSelect"><option value="">Öğrenci Seç...</option></select>
         <select id="lBranchSelect"></select>
         <select id="tSelect"></select>
         <select id="lStatusType"><option value="Normal">Normal</option><option value="Telafi">Telafi</option></select>
@@ -101,15 +124,14 @@
     <div class="admin-only"><input type="text" id="dbSName" placeholder="Ad Soyad"><select id="dbSBranchSelect"></select><input type="number" id="dbSPrice" placeholder="₺ Ücret"><select id="dbSPayStatus"><option value="Ödenmedi">Ödenmedi</option><option value="Ödendi">Ödendi</option><option value="Ön Ödeme">Ön Ödeme</option></select><button class="btn-main" onclick="addDBStudent()">KAYDET</button></div><hr>
     <div id="studentDBList"></div>
 </div>
-
 <div id="pTeachers" class="side-panel">
     <div style="display:flex; justify-content:space-between;"><strong>👨‍🏫 Hoca Listesi</strong><button onclick="closePanels()">✕</button></div>
     <div class="admin-only"><input type="text" id="nTName" placeholder="Hoca Adı"><input type="number" id="nTRate" placeholder="₺ Ücret"><button class="btn-main" onclick="addTeacher()">HOCA EKLE</button></div><hr>
     <div id="tList"></div>
 </div>
 
-<div id="modalHakedis" class="modal-overlay"><div class="modal-content"><h3>💰 Hakediş</h3><div id="hakedisContent"></div><button class="btn-main" onclick="this.parentElement.parentElement.style.display='none'">KAPAT</button></div></div>
-<div id="modalDevamsiz" class="modal-overlay"><div class="modal-content"><h3>📋 Devamsızlık</h3><div id="devamsizContent"></div><button class="btn-main" onclick="this.parentElement.parentElement.style.display='none'">KAPAT</button></div></div>
+<div id="modalHakedis" class="modal-overlay"><div class="modal-content"><h3>💰 Hakediş Raporu</h3><div id="hakedisContent"></div><button class="btn-main" onclick="this.parentElement.parentElement.style.display='none'">KAPAT</button></div></div>
+<div id="modalDevamsiz" class="modal-overlay"><div class="modal-content"><h3>📋 Devamsızlık Listesi</h3><div id="devamsizContent"></div><button class="btn-main" onclick="this.parentElement.parentElement.style.display='none'">KAPAT</button></div></div>
 
 <script>
     const firebaseConfig = { apiKey: "AIzaSyCDDZldfmk_wO3EYL1YC_yDLcSrPf3fQ6w", authDomain: "karamel-sanat-merkezi.firebaseapp.com", projectId: "karamel-sanat-merkezi", storageBucket: "karamel-sanat-merkezi.firebasestorage.app", messagingSenderId: "669363030241", appId: "1:669363030241:web:6583fc1b2d1f2eb7f8cfa0" };
@@ -133,6 +155,12 @@
 
     function oP(id) { document.querySelectorAll('.side-panel').forEach(p=>p.style.display='none'); document.getElementById(id).style.display='block'; document.getElementById('overlay').style.display='block'; }
     function closePanels() { document.querySelectorAll('.side-panel').forEach(p=>p.style.display='none'); document.getElementById('overlay').style.display='none'; }
+
+    function resetFilters() {
+        document.getElementById('filterTeacher').value = "Tümü";
+        document.getElementById('filterStudent').value = "Tümü";
+        renderLessons();
+    }
 
     function openEdit(id) {
         if(!document.getElementById('bodyTag').classList.contains('is-admin')) return;
@@ -161,78 +189,92 @@
         document.getElementById('editModal').style.display = 'none';
     }
 
-    function render() {
-        db.collection("dersler").orderBy("time").onSnapshot(snap => {
-            const listDiv = document.getElementById('lessonList'); 
-            const tableCont = document.getElementById('tableContainer');
-            listDiv.innerHTML = ""; tableCont.innerHTML = "";
-            lessonsData = []; snap.forEach(d => lessonsData.push({id: d.id, ...d.data()}));
-            const adm = document.getElementById('bodyTag').classList.contains('is-admin');
+    function renderLessons() {
+        const listDiv = document.getElementById('lessonList');
+        const selT = document.getElementById('filterTeacher').value;
+        const selS = document.getElementById('filterStudent').value;
+        const adm = document.getElementById('bodyTag').classList.contains('is-admin');
+        listDiv.innerHTML = "";
 
-            const daysData = {};
-            lessonsData.forEach(l => {
-                const dayIndex = new Date(l.time).getDay();
-                if(!daysData[dayIndex]) daysData[dayIndex] = {};
-                if(!daysData[dayIndex][l.teacher]) daysData[dayIndex][l.teacher] = [];
-                daysData[dayIndex][l.teacher].push(l);
-            });
+        const filtered = lessonsData.filter(l => {
+            const matchT = (selT === "Tümü" || l.teacher === selT);
+            const matchS = (selS === "Tümü" || l.student === selS);
+            return matchT && matchS;
+        });
 
-            [1,2,3,4,5,6,0].forEach(dIdx => {
-                if(!daysData[dIdx]) return;
-                let dayHTML = `<div class="day-row"><div class="day-header">📅 ${gunler[dIdx]}</div><div class="teachers-grid">`;
-                Object.keys(daysData[dIdx]).sort().forEach(tName => {
-                    dayHTML += `<div class="teacher-column"><div class="teacher-name-tag">👨‍🏫 ${tName}</div>`;
-                    daysData[dIdx][tName].sort((a,b)=>a.time.localeCompare(b.time)).forEach(data => {
-                        const isDone = !!data.checkIn, isAbs = data.status === 'Gelmedi', timeStr = data.time.split('T')[1];
-                        const hasConflict = lessonsData.filter(l => l.id !== data.id && l.time === data.time && (l.teacher === data.teacher || l.student === data.student)).length > 0;
-                        let icon = hasConflict ? '⚠️' : (isDone ? '✅' : (isAbs ? '❌' : '⚪'));
-                        dayHTML += `<div class="tablo-ders" onclick="openEdit('${data.id}')">
-                            ${data.type==='Telafi'?'<div class="telafi-badge">TELAFİ</div><br>':''}
-                            ${icon} <b>${data.student}</b><br><small>🎸 ${data.branch}</small><br><small>⏰ ${timeStr}</small>
-                        </div>`;
-                    });
-                    dayHTML += `</div>`;
+        filtered.forEach(data => {
+            const isAbs = data.status === 'Gelmedi', isDone = !!data.checkIn, timeStr = data.time.split('T')[1];
+            const hasConflict = lessonsData.filter(l => l.id !== data.id && l.time === data.time && (l.teacher === data.teacher || l.student === data.student)).length > 0;
+            const payStyle = data.isPaid === 'Ödendi' ? 'background:#d1fae5; color:#065f46;' : (data.isPaid === 'Ön Ödeme' ? 'background:#dbeafe; color:#1e40af;' : 'background:#fee2e2; color:#991b1b;');
+            
+            listDiv.innerHTML += `<div class="lesson-item" onclick="openEdit('${data.id}')">
+                ${data.type==='Telafi' ? '<div class="telafi-badge" style="font-size:11px; padding:3px 7px;">TELAFİ</div>' : ''}
+                ${hasConflict ? '<span style="color:var(--red); font-size:11px; font-weight:bold; display:block;">⚠️ ÇAKIŞMA!</span>' : ''}
+                ${adm ? `<button class="del-btn" onclick="event.stopPropagation(); del('dersler','${data.id}')" style="position:absolute; top:10px; right:10px;">✕</button>
+                         <div onclick="event.stopPropagation(); cyclePay('${data.id}','${data.isPaid}')" style="position:absolute; top:12px; right:45px; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:bold; cursor:pointer; ${payStyle}">${data.price}₺ - ${data.isPaid}</div>` : ''}
+                <b>👤 ${data.student}</b><br><small>👨‍🏫 ${data.teacher} | 🎸 ${data.branch}</small><br><b>⏰ ${timeStr}</b>
+                <div style="display:flex; gap:5px; margin-top:10px;">
+                    <button onclick="event.stopPropagation(); fT('${data.id}','checkIn','${data.checkIn||''}')" style="flex:1; background:var(--green); color:white; border:none; border-radius:10px; padding:10px; font-weight:bold;">${data.checkIn||'GİRİŞ'}</button>
+                    <button onclick="event.stopPropagation(); fT('${data.id}','checkOut','${data.checkOut||''}')" style="flex:1; background:var(--blue); color:white; border:none; border-radius:10px; font-weight:bold;">${data.checkOut||'ÇIKIŞ'}</button>
+                    <button onclick="event.stopPropagation(); db.collection('dersler').doc('${data.id}').update({status:'${isAbs?'Bekliyor':'Gelmedi'}', checkIn:'', checkOut:''})" style="flex:1; background:#666; color:white; border:none; border-radius:10px; font-weight:bold;">${isAbs?'GELDİ':'GELMEDİ'}</button>
+                </div></div>`;
+        });
+    }
+
+    function renderTable() {
+        const tableCont = document.getElementById('tableContainer');
+        tableCont.innerHTML = "";
+        const daysData = {};
+        lessonsData.forEach(l => {
+            const dayIndex = new Date(l.time).getDay();
+            if(!daysData[dayIndex]) daysData[dayIndex] = {};
+            if(!daysData[dayIndex][l.teacher]) daysData[dayIndex][l.teacher] = [];
+            daysData[dayIndex][l.teacher].push(l);
+        });
+
+        [1,2,3,4,5,6,0].forEach(dIdx => {
+            if(!daysData[dIdx]) return;
+            let dayHTML = `<div class="day-row"><div class="day-header">📅 ${gunler[dIdx]}</div><div class="teachers-grid">`;
+            Object.keys(daysData[dIdx]).sort().forEach(tName => {
+                dayHTML += `<div class="teacher-column"><div class="teacher-name-tag">👨‍🏫 ${tName}</div>`;
+                daysData[dIdx][tName].sort((a,b)=>a.time.localeCompare(b.time)).forEach(data => {
+                    const isDone = !!data.checkIn, isAbs = data.status === 'Gelmedi', timeStr = data.time.split('T')[1];
+                    const hasConflict = lessonsData.filter(l => l.id !== data.id && l.time === data.time && (l.teacher === data.teacher || l.student === data.student)).length > 0;
+                    let icon = hasConflict ? '⚠️' : (isDone ? '✅' : (isAbs ? '❌' : '⚪'));
+                    dayHTML += `<div class="tablo-ders" onclick="openEdit('${data.id}')">
+                        ${data.type==='Telafi'?'<div class="telafi-badge">TELAFİ</div><br>':''}
+                        ${icon} <b>${data.student}</b><br><small>🎸 ${data.branch}</small><br><small>⏰ ${timeStr}</small>
+                    </div>`;
                 });
-                tableCont.innerHTML += dayHTML + `</div></div>`;
+                dayHTML += `</div>`;
             });
-
-            lessonsData.forEach(data => {
-                const isAbs = data.status === 'Gelmedi', isDone = !!data.checkIn, timeStr = data.time.split('T')[1];
-                const hasConflict = lessonsData.filter(l => l.id !== data.id && l.time === data.time && (l.teacher === data.teacher || l.student === data.student)).length > 0;
-                const payStyle = data.isPaid === 'Ödendi' ? 'background:#d1fae5; color:#065f46;' : (data.isPaid === 'Ön Ödeme' ? 'background:#dbeafe; color:#1e40af;' : 'background:#fee2e2; color:#991b1b;');
-                
-                listDiv.innerHTML += `<div class="lesson-item" onclick="openEdit('${data.id}')">
-                    ${data.type==='Telafi' ? '<div class="telafi-badge" style="font-size:11px; padding:3px 7px;">TELAFİ</div>' : ''}
-                    ${hasConflict ? '<span style="color:var(--red); font-size:11px; font-weight:bold; display:block;">⚠️ ÇAKIŞMA!</span>' : ''}
-                    ${adm ? `<button class="del-btn" onclick="event.stopPropagation(); del('dersler','${data.id}')" style="position:absolute; top:10px; right:10px;">✕</button>
-                             <div onclick="event.stopPropagation(); cyclePay('${data.id}','${data.isPaid}')" style="position:absolute; top:12px; right:45px; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:bold; cursor:pointer; ${payStyle}">${data.price}₺ - ${data.isPaid}</div>` : ''}
-                    <b>👤 ${data.student}</b><br><small>👨‍🏫 ${data.teacher} | 🎸 ${data.branch}</small><br><b>⏰ ${timeStr}</b>
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        <button onclick="event.stopPropagation(); fT('${data.id}','checkIn','${data.checkIn||''}')" style="flex:1; background:var(--green); color:white; border:none; border-radius:10px; padding:10px; font-weight:bold;">${data.checkIn||'GİRİŞ'}</button>
-                        <button onclick="event.stopPropagation(); fT('${data.id}','checkOut','${data.checkOut||''}')" style="flex:1; background:var(--blue); color:white; border:none; border-radius:10px; font-weight:bold;">${data.checkOut||'ÇIKIŞ'}</button>
-                        <button onclick="event.stopPropagation(); db.collection('dersler').doc('${data.id}').update({status:'${isAbs?'Bekliyor':'Gelmedi'}', checkIn:'', checkOut:''})" style="flex:1; background:#666; color:white; border:none; border-radius:10px; font-weight:bold;">${isAbs?'GELDİ':'GELMEDİ'}</button>
-                    </div></div>`;
-            });
+            tableCont.innerHTML += dayHTML + `</div></div>`;
         });
     }
 
     function sync() {
+        db.collection("dersler").orderBy("time").onSnapshot(snap => {
+            lessonsData = []; snap.forEach(d => lessonsData.push({id: d.id, ...d.data()}));
+            renderLessons(); renderTable();
+        });
         db.collection("hocalar").orderBy("name").onSnapshot(snap => { 
             const adm = document.getElementById('bodyTag').classList.contains('is-admin');
-            const s1 = document.getElementById('tSelect'), list = document.getElementById('tList');
-            s1.innerHTML = ""; list.innerHTML = "";
+            const s1 = document.getElementById('tSelect'), list = document.getElementById('tList'), filterT = document.getElementById('filterTeacher');
+            s1.innerHTML = ""; list.innerHTML = ""; filterT.innerHTML = '<option value="Tümü">Hoca Tümü</option>';
             snap.forEach(doc => { 
                 const n = doc.data().name, r = doc.data().rate || 0; 
                 tMap[n] = r; s1.innerHTML += `<option value="${n}">${n}</option>`; 
+                filterT.innerHTML += `<option value="${n}">${n}</option>`;
                 list.innerHTML += `<div class="list-card"><b>${n}</b><br><small>Hakediş: ${r}₺</small>${adm ? `<button class="del-btn" style="position:absolute; top:12px; right:12px;" onclick="del('hocalar','${doc.id}')">✕</button>` : ''}</div>`; 
             }); 
         });
         db.collection("ogrenciler").orderBy("name").onSnapshot(snap => { 
             const adm = document.getElementById('bodyTag').classList.contains('is-admin');
-            sDB = []; const sel = document.getElementById('sSelect'), list = document.getElementById('studentDBList');
-            sel.innerHTML = '<option value="">Öğrenci Seç...</option>'; list.innerHTML = "";
+            sDB = []; const sel = document.getElementById('sSelect'), list = document.getElementById('studentDBList'), filterS = document.getElementById('filterStudent');
+            sel.innerHTML = '<option value="">Öğrenci Seç...</option>'; list.innerHTML = ""; filterS.innerHTML = '<option value="Tümü">Öğrenci Tümü</option>';
             snap.forEach(doc => { 
                 const d = doc.data(); sDB.push(d); sel.innerHTML += `<option value="${d.name}">${d.name}</option>`; 
+                filterS.innerHTML += `<option value="${d.name}">${d.name}</option>`;
                 list.innerHTML += `<div class="list-card"><b>${d.name}</b><br><small>${d.branch} | ${d.price}₺</small>${adm ? `<button class="del-btn" style="position:absolute; top:12px; right:12px;" onclick="del('ogrenciler','${doc.id}')">✕</button>` : ''}</div>`; 
             }); 
         });
@@ -251,9 +293,9 @@
     async function addLesson() { const s = document.getElementById('sSelect').value, h = document.getElementById('tSelect').value, d = document.getElementById('lDate').value, t = document.getElementById('lTime').value, tp = document.getElementById('lStatusType').value; const stu = sDB.find(x => x.name === s); if(!stu || !d || !t) return alert("Hata: Öğrenci, Tarih ve Saat seçilmeli!"); await db.collection("dersler").add({ student:s, teacher:h, time:`${d}T${t}`, branch:document.getElementById('lBranchSelect').value, type:tp, price:stu.price, isPaid:stu.payStatus, status:'Bekliyor', checkIn:'', checkOut:'' }); }
 
     function showHakedis() { const cont = document.getElementById('hakedisContent'); cont.innerHTML = ""; let h = {}; lessonsData.forEach(l => { if(l.checkIn && l.checkOut) { if(!h[l.teacher]) h[l.teacher] = { c: 0, t: 0 }; h[l.teacher].c++; h[l.teacher].t += (tMap[l.teacher] || 0); } }); for (let k in h) cont.innerHTML += `<div class="list-card"><b>${k}</b>: ${h[k].t} ₺ (${h[k].c} Ders)</div>`; document.getElementById('modalHakedis').style.display = 'flex'; }
-    function showDevamsizlik() { const cont = document.getElementById('devamsizContent'); cont.innerHTML = ""; lessonsData.filter(l => l.status === 'Gelmedi').forEach(l => { const dStr = l.time.split('T')[0].split('-').reverse().join('.'); cont.innerHTML += `<div class="list-card"><b>${l.student}</b><br>${l.teacher} - ${dStr}</div>`; }); document.getElementById('modalDevamsiz').style.display = 'flex'; }
+    function showDevamsizlik() { const cont = document.getElementById('devamsizContent'); cont.innerHTML = ""; lessonsData.filter(l => l.status === 'Gelmedi').forEach(l => { const dStr = l.time.split('T')[0].split('-').reverse().join('.'); cont.innerHTML += `<div class="list-card"><b>${l.student}</b><br><small>${l.teacher} - ${dStr}</small></div>`; }); document.getElementById('modalDevamsiz').style.display = 'flex'; }
 
-    sync(); render();
+    sync();
 </script>
 </body>
 </html>
